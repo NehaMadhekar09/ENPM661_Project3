@@ -1,15 +1,13 @@
 #================================================================================================================================
 # Github link of the code repository:
-# 
+# https://github.com/NehaMadhekar09/ENPM661_Project3
 # 
 #================================================================================================================================
 import pygame
 import numpy as np
 from collections import deque
-from shapely.geometry import LineString
 import time
 import math
-from pygame import gfxdraw
 #================================================================================================================================
 # Functions for creating obstacle space 
 
@@ -48,7 +46,7 @@ def CreateObstacles(canvas,clerarance,robot_radius):
 
 def ActionVel(curr_node_xytheta,UL,UR,wall_clearance,rectangle_1,rectangle_2,circle):
     t = 0
-    r = 3.8
+    r = 3.3
     L = 16
     dt = 0.1
     Xn=curr_node_xytheta[0]
@@ -56,11 +54,8 @@ def ActionVel(curr_node_xytheta,UL,UR,wall_clearance,rectangle_1,rectangle_2,cir
     Thetan = 3.14 * curr_node_xytheta[2] / 180
     going_in_obstacle=False
 
-# Xi, Yi,Thetai: Input point's coordinates
-# Xs, Ys: Start point coordinates for plot function
-# Xn, Yn, Thetan: End point coordintes
     D=0
-    while t< 0.5:
+    while t< 1:
         t = t + dt
         Xs = Xn
         Ys = Yn
@@ -77,18 +72,15 @@ def ActionVel(curr_node_xytheta,UL,UR,wall_clearance,rectangle_1,rectangle_2,cir
 
 def plot_curve(canvas,Xi,Yi,Thetai,UL,UR,color=(0, 0, 255)):
     t = 0
-    r = 3.8
+    r = 3.3
     L = 16
     dt = 0.1
     Xn=Xi
     Yn=Yi
     Thetan = 3.14 * Thetai / 180
 
-# Xi, Yi,Thetai: Input point's coordinates
-# Xs, Ys: Start point coordinates for plot function
-# Xn, Yn, Thetan: End point coordintes
     D=0
-    while t<0.5:
+    while t<1:
         t = t + dt
         Xs = Xn
         Ys = Yn
@@ -171,8 +163,6 @@ def UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,o
         cost_to_go=ComputeDistance(new_node_xytheta,goal_node_xy)
         total_cost=cost_to_come+cost_to_go
         open_queue[new_node_xythetaD]=(total_cost,cost_to_come,cost_to_go,index,current_node[1][3],new_node_xytheta,action)
-    # new_node=open_queue[new_node_xythetaD]
-    # return new_node
 
 # This function generates path by backtracking.
 def BacktrackPath(closed_queue,goal_xy_theta,goal_parent_index,goal_action):
@@ -394,8 +384,8 @@ wall_clearance,rectangle_1,rectangle_2,circle=CreateObstacles(canvas,clearance,r
 
 # Get correct inputs from user
 while True:
-    x=int(input("Enter x coordinate of the start node: "))
-    y=int(input("Enter y coordinate of the start node: "))
+    x=int(input("Enter x coordinate of the start node(in cm and w.r.t gazebo map): "))
+    y=int(input("Enter y coordinate of the start node(in cm and w.r.t gazebo map): "))
     start_x=x+50
     start_y=100-y
     start_theta=int(input("Enter the orientation of the robot in degrees at the start node(It should be multiple of 30): "))
@@ -409,8 +399,8 @@ while True:
     
 
 while True:
-    x=int(input("Enter x coordinate of the goal node: "))
-    y=int(input("Enter y coordinate of the goal node: "))
+    x=int(input("Enter x coordinate of the goal node(in cm and w.r.t gazebo map): "))
+    y=int(input("Enter y coordinate of the goal node(in cm and w.r.t gazebo map): "))
     goal_x=x+50
     goal_y=100-y
     if (0<=goal_x<600 and 0<=goal_y<200):
@@ -421,8 +411,8 @@ while True:
         else:
             print("The goal node lie in the obstacle space. Enter the values again")
 
-RPM1=int(input("Enter the value of RPM1 (roughly between 5 to 20)"))
-RPM2=int(input("Enter the value of RPM2 (roughly between 5 to 20)"))
+RPM1=int(input("Enter the value of RPM1 (less than 20 for better results)"))
+RPM2=int(input("Enter the value of RPM2 (less than 20 for better results)"))
 
 # Highlight start and end point
 pygame.draw.circle(canvas, (255,0,0), (start_x,start_y),3,1)
@@ -453,7 +443,13 @@ if result[0]:
         plot_curve(canvas,path[i-1][0][0],path[i-1][0][1],path[i-1][0][2],path[i][1][0],path[i][1][1],(255,255,0))
         pygame.display.flip()
 
-
+    # Dump waypoints in text file
+    file_nodes = open("Waypoints.txt","w")
+    for i in range (len(path)):
+        x_gazebo=(path[i][0][0]-50)/100
+        y_gazebo=(100-path[i][0][1])/100
+        file_nodes.write(str(x_gazebo)+" "+str(y_gazebo)+"\n")
+    file_nodes.close()
 running = True
   
 while running:
