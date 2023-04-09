@@ -48,8 +48,8 @@ def CreateObstacles(canvas,clerarance,robot_radius):
 
 def ActionVel(curr_node_xytheta,UL,UR,wall_clearance,rectangle_1,rectangle_2,circle):
     t = 0
-    r = 10.5
-    L = 16.0
+    r = 3.8
+    L = 16
     dt = 0.1
     Xn=curr_node_xytheta[0]
     Yn=curr_node_xytheta[1]
@@ -60,7 +60,7 @@ def ActionVel(curr_node_xytheta,UL,UR,wall_clearance,rectangle_1,rectangle_2,cir
 # Xs, Ys: Start point coordinates for plot function
 # Xn, Yn, Thetan: End point coordintes
     D=0
-    while t<0.5:
+    while t< 0.5:
         t = t + dt
         Xs = Xn
         Ys = Yn
@@ -77,8 +77,8 @@ def ActionVel(curr_node_xytheta,UL,UR,wall_clearance,rectangle_1,rectangle_2,cir
 
 def plot_curve(canvas,Xi,Yi,Thetai,UL,UR,color=(0, 0, 255)):
     t = 0
-    r = 10.5
-    L = 16.0
+    r = 3.8
+    L = 16
     dt = 0.1
     Xn=Xi
     Yn=Yi
@@ -150,7 +150,7 @@ def IsActionPossible(current_node,RPM_left, RPM_right,closed_queue,closed_Q_matr
     if 0<=x_n<600 and 0<=y_n<200:
         if not going_in_obstacle:
             new_node_xythetaD=DiscretizeNodeCoordinates((new_node_xytheta[0],new_node_xytheta[1]))   
-            if closed_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]==0:
+            if closed_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]==0:
                 return [True,new_node_xythetaD, new_node_xytheta,action_cost] 
     return[False]
 
@@ -161,7 +161,7 @@ def ComputeDistance(node_xy,goal_node_xytheta):
 # Updates open list 
 def UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_queue,open_matrix,index,goal_node_xy,action):
     cost_to_come=current_node[1][1] + action_cost
-    if open_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]==1:
+    if open_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]==1:
         if(cost_to_come < open_queue[new_node_xythetaD][1]):
             id=open_queue[new_node_xythetaD][3]
             cost_to_go=open_queue[new_node_xythetaD][2]
@@ -189,7 +189,7 @@ def BacktrackPath(closed_queue,goal_xy_theta,goal_parent_index,goal_action):
     return path
 
 # Discretize node coordinates or find the node region
-def DiscretizeNodeCoordinates(actual_coordinates,thresholds=(2,2)):
+def DiscretizeNodeCoordinates(actual_coordinates,thresholds=(5,5)):
     discretized_coordinates=[]
     for i in range(len(actual_coordinates)):
         remainder=actual_coordinates[i]%thresholds[i]
@@ -212,17 +212,17 @@ def IsGoalReached(node_xy, goal_node_xy,goal_threshold):
 def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clearance,rectangle_1,rectangle_2,circle):
     visited_nodes=[]
     open_Q = {}
-    open_Q_matrix=np.zeros(shape=(100,300))
+    open_Q_matrix=np.zeros(shape=(40,120))
     closed_Q={}
-    closed_Q_matrix=np.zeros(shape=(100,300))
+    closed_Q_matrix=np.zeros(shape=(40,120))
     actions=[]
     
     # creating tuple with total cost,cost to come,cost to go,node index, parent node index and tuple with actual position(x,y,theta)
     # Adding it to the dictionary with key value as descritized node coordinates(x_d,y_d,theta_d)
     start_node_xythetaD=DiscretizeNodeCoordinates((start_node_xytheta[0],start_node_xytheta[1]))
     open_Q[start_node_xythetaD]=(0,0,0,0,0,start_node_xytheta,(0,0))
-    open_Q_matrix[int(start_node_xythetaD[1]/2)][int(start_node_xythetaD[0]/2)]=1
-    visited_nodes.append((0,start_node_xytheta))
+    open_Q_matrix[int(start_node_xythetaD[1]/5)][int(start_node_xythetaD[0]/5)]=1
+    visited_nodes.append((0,start_node_xytheta,(0,0)))
     actions.append((0,0))
 
     goal_threshold=5
@@ -237,7 +237,7 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
         open_Q=dict(sorted(open_Q.items(),key=lambda x:x[1][0],reverse = True))
         current_node=open_Q.popitem()
         closed_Q[current_node[0]]=current_node[1]
-        closed_Q_matrix[int(current_node[0][1]/2)][int(current_node[0][0]/2)]=1
+        closed_Q_matrix[int(current_node[0][1]/5)][int(current_node[0][0]/5)]=1
         
         # Check if action1 [0, RPM1] possible
         Action_1=IsActionPossible(current_node,0,RPM1,closed_Q,closed_Q_matrix,wall_clearance,rectangle_1,rectangle_2,circle)
@@ -246,8 +246,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_1[2]
             action_cost=Action_1[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(0,RPM1))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(0,RPM1)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],0,RPM1)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -262,8 +262,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_2[2]
             action_cost=Action_2[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(RPM1,0))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(RPM1,0)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],RPM1,0)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -278,8 +278,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_3[2]
             action_cost=Action_3[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(RPM1,RPM1))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(RPM1,RPM1)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],RPM1,RPM1)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -294,8 +294,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_4[2]
             action_cost=Action_4[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(0,RPM2))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(0,RPM2)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],0,RPM2)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -310,8 +310,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_5[2]
             action_cost=Action_5[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(RPM2,0))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(RPM2,0)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],RPM2,0)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -326,8 +326,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_6[2]
             action_cost=Action_6[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(RPM2,RPM2))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(RPM2,RPM2)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],RPM2,RPM2)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -342,8 +342,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_7[2]
             action_cost=Action_7[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(RPM1,RPM2))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(RPM1,RPM2)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],RPM1,RPM2)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -358,8 +358,8 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
             new_node_xytheta=Action_8[2]
             action_cost=Action_8[3]
             UpdateOpenList(current_node,new_node_xythetaD,new_node_xytheta,action_cost,open_Q,open_Q_matrix,index,goal_node_xy,(RPM2,RPM1))
-            open_Q_matrix[int(new_node_xythetaD[1]/2)][int(new_node_xythetaD[0]/2)]=1
-            visited_nodes.append((current_node[1][3],new_node_xytheta))
+            open_Q_matrix[int(new_node_xythetaD[1]/5)][int(new_node_xythetaD[0]/5)]=1
+            visited_nodes.append((current_node[1][3],new_node_xytheta,(RPM2,RPM1)))
             plot_curve(canvas,current_node[1][5][0],current_node[1][5][1],current_node[1][5][2],RPM2,RPM1)
             index+=1
             if IsGoalReached(new_node_xytheta,goal_node_xy,goal_threshold):
@@ -375,7 +375,7 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
     if(isConverged):
         # Backtrach path
         path=BacktrackPath(closed_Q,goal_node_xy,goal_parent_index,goal_action)
-        return [isConverged,path, visited_nodes]
+        return [isConverged,path]
 
     return [isConverged]
 
@@ -383,108 +383,75 @@ def A_Star_Algorithm(start_node_xytheta, goal_node_xy,RPM1,RPM2,canvas,wall_clea
 #================================================================================================================================
 # Function Calls
 
-# clearance=int(input("Enter the clearance value: "))
-# robot_radius=int(input("Enter the robot radius: "))
+clearance=int(input("Enter the clearance value: "))
 
-clearance=5
-robot_radius=10.5 
+robot_radius=10.5 #in cm
 
 pygame.init()
 canvas=pygame.display.set_mode((600,200))
 
 wall_clearance,rectangle_1,rectangle_2,circle=CreateObstacles(canvas,clearance,robot_radius)
 
-# # Get correct inputs from user
-# while True:
-#     start_x=int(input("Enter x coordinate of the start node: "))
-#     start_y=int(input("Enter y coordinate of the start node: "))
-#     start_theta=int(input("Enter the orientation of the robot in degrees at the start node(It should be multiple of 30): "))
-#     if (0<=start_x<600 and 0<=start_y<250 and abs(start_theta%30) == 0):
-#         # Check whether the inputs are not in collision space
-#         is_node_in_obstacle_space=IsNodeInObstacleSpace((start_x,249-start_y),wall_clearance,rectangle_1,rectangle_2,hexagon,triangle)
-#         if not is_node_in_obstacle_space:
-#             break
-#         print("The start node lie in the obstacle space. Enter the values again")
-#     else:
-#         print("The start node is not within the canvas range or start orientation angle is not multiple of 30 degrees.Enter the values again")
+# Get correct inputs from user
+while True:
+    x=int(input("Enter x coordinate of the start node: "))
+    y=int(input("Enter y coordinate of the start node: "))
+    start_x=x+50
+    start_y=100-y
+    start_theta=int(input("Enter the orientation of the robot in degrees at the start node(It should be multiple of 30): "))
+    if (0<=start_x<600 and 0<=start_y<200):
+        # Check whether the inputs are not in collision space
+        is_node_in_obstacle_space=IsNodeInObstacleSpace((start_x,start_y),wall_clearance,rectangle_1,rectangle_2,circle)
+        if not is_node_in_obstacle_space:
+            break
+        else:
+            print("The start node lie in the obstacle space. Enter the values again")
+    
 
-# while True:
-#     goal_x=int(input("Enter x coordinate of the goal node: "))
-#     goal_y=int(input("Enter y coordinate of the goal node: "))
-#     goal_theta=int(input("Enter the orientation of the robot in degrees at the goal node(It should be multiple of 30): "))
-#     if (0<=goal_x<600 and 0<=goal_y<250 and abs(goal_theta%30) == 0):
-#         # Check whether the inputs are not in collision space
-#         is_node_in_obstacle_space=IsNodeInObstacleSpace((goal_x,249-goal_y),wall_clearance,rectangle_1,rectangle_2,hexagon,triangle)
-#         if not is_node_in_obstacle_space:
-#             break
-#         print("The goal node lie in the obstacle space. Enter the values again")
-#     else:
-#         print("The goal node is not within the canvas range or goal orientation angle is not multiple of 30 degrees.Enter the values again")
+while True:
+    x=int(input("Enter x coordinate of the goal node: "))
+    y=int(input("Enter y coordinate of the goal node: "))
+    goal_x=x+50
+    goal_y=100-y
+    if (0<=goal_x<600 and 0<=goal_y<200):
+        # Check whether the inputs are not in collision space
+        is_node_in_obstacle_space=IsNodeInObstacleSpace((goal_x,goal_y),wall_clearance,rectangle_1,rectangle_2,circle)
+        if not is_node_in_obstacle_space:
+            break
+        else:
+            print("The goal node lie in the obstacle space. Enter the values again")
 
+RPM1=int(input("Enter the value of RPM1 (roughly between 5 to 20)"))
+RPM2=int(input("Enter the value of RPM2 (roughly between 5 to 20)"))
 
-# while True:
-#     step_size=int(input("Enter the step size of the robot between 1 and 10(both inclusive): "))
-#     if 0<=step_size<=10:
-#          break
-#     else:
-#         print("The step size is not within the range.Enter the value again.")
+# Highlight start and end point
+pygame.draw.circle(canvas, (255,0,0), (start_x,start_y),3,1)
+pygame.draw.circle(canvas, (255,0,0),(goal_x,goal_y),3,1)
+pygame.display.flip()
 
 print("A* in progress...")
 
-# # Convert start and goal node to correct coordinate system
-# if start_theta < 0:
-#     start_theta=360+start_theta
-# if start_theta >= 360:
-#     start_theta=start_theta-360
-
-# if goal_theta < 0:
-#     goal_theta=360+goal_theta
-# if goal_theta >= 360:
-#     goal_theta=goal_theta-360
-
-# start_node_xytheta=(start_x,249-start_y,start_theta)
-# goal_node_xytheta=(goal_x,249-goal_y,goal_theta)
+# Convert start and goal node to correct coordinate system
+if start_theta < 0:
+    start_theta=360+start_theta
+if start_theta >= 360:
+    start_theta=start_theta-360
 
 start_time = time.time()
 
-result=A_Star_Algorithm((20,20,45),(275,50),5,10,canvas,wall_clearance,rectangle_1,rectangle_2,circle)
+result=A_Star_Algorithm((start_x,start_y,start_theta),(goal_x,goal_y),RPM1,RPM2,canvas,wall_clearance,rectangle_1,rectangle_2,circle)
 
 end_time = time.time()
 print("Total time taken in seconds: ",end_time - start_time)
 
 if result[0]:
     path=result[1]
-    visited_nodes=result[2]
-    # Display explored path
-    # for i in range(1,len(visited_nodes)):
-    #     parent_index=visited_nodes[i][0]
-    #     pygame.draw.line(canvas, (0, 0, 255),
-    #             [visited_nodes[parent_index][1][0], visited_nodes[parent_index][1][1]],
-    #             [visited_nodes[i][1][0], visited_nodes[i][1][1]], 1)
-    #     pygame.display.flip()
-    
     # Show optimal path
     pygame.draw.circle(canvas, (255,255,0), (path[0][0][0],path[0][0][1]),1)
     for i in range (1,len(path)):
         pygame.draw.circle(canvas, (255,255,0), (path[i][0][0],path[i][0][1]),1)
         plot_curve(canvas,path[i-1][0][0],path[i-1][0][1],path[i-1][0][2],path[i][1][0],path[i][1][1],(255,255,0))
-        # pygame.draw.line(canvas, (255,255,0),
-        #         [path[i][0], path[i][1]],
-        #         [path[i+1][0], path[i+1][1]], 1)
         pygame.display.flip()
-
-    # pygame.draw.circle(canvas, (255,255,0), (path[len(path)-1][0],path[len(path)-1][1]),1)
-    # x2=path[len(path)-1][0]+step_size*np.cos(np.deg2rad(path[len(path)-1][2]))
-    # y2=path[len(path)-1][1]+step_size*np.sin(np.deg2rad(path[len(path)-1][2]))
-    # pygame.draw.line(canvas, (255,0,0),
-    #             [path[len(path)-1][0], path[len(path)-1][1]],
-    #             [x2, y2], 2)
-    # pygame.display.flip()
-
-# Highlight start and end point
-pygame.draw.circle(canvas, (255,0,0), (20,20),3,1)
-pygame.draw.circle(canvas, (255,0,0),(275,50),3,1)
-pygame.display.flip()
 
 
 running = True
